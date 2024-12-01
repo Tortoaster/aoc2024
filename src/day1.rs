@@ -1,6 +1,6 @@
 use itertools::Itertools;
 
-pub fn solve_1a(input: &str) -> u32 {
+pub fn solve_a(input: &str) -> u64 {
     let (mut first, mut second) = separate_lists(input);
 
     first.sort();
@@ -13,7 +13,7 @@ pub fn solve_1a(input: &str) -> u32 {
         .sum()
 }
 
-pub fn solve_1b(input: &str) -> u32 {
+pub fn solve_b(input: &str) -> u64 {
     let (first, second) = separate_lists(input);
 
     let map = second
@@ -28,10 +28,10 @@ pub fn solve_1b(input: &str) -> u32 {
         .sum()
 }
 
-fn separate_lists(input: &str) -> (Vec<u32>, Vec<u32>) {
+fn separate_lists(input: &str) -> (Vec<u64>, Vec<u64>) {
     input
         .lines()
         .map(|line| line.split_once("   ").unwrap())
-        .map(|(l, r)| (l.parse::<u32>().unwrap(), r.parse::<u32>().unwrap()))
+        .map(|(l, r)| (l.parse::<u64>().unwrap(), r.parse::<u64>().unwrap()))
         .unzip()
 }
