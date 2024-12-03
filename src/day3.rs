@@ -4,16 +4,11 @@ pub fn solve_a(input: &str) -> u64 {
 
 pub fn solve_b(input: &str) -> u64 {
     input
-        .split("don't()")
-        .enumerate()
-        .map(|(index, line)| {
-            if index == 0 {
-                line
-            } else {
-                line.split_once("do()")
-                    .map(|(_, line)| line)
-                    .unwrap_or_default()
-            }
+        .split("do()")
+        .map(|line| {
+            line.split_once("don't()")
+                .map(|(line, _)| line)
+                .unwrap_or(line)
         })
         .flat_map(|l| l.split("mul("))
         .skip(1)
