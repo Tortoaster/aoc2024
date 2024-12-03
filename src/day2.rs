@@ -1,13 +1,7 @@
-use itertools::Itertools;
-
 pub fn solve_a(input: &str) -> u64 {
     input
         .lines()
-        .map(|line| {
-            line.split(' ')
-                .map(|s| s.parse::<u64>().unwrap())
-                .collect::<Vec<_>>()
-        })
+        .map(parse_numbers)
         .filter(|numbers| solve_a_line(numbers))
         .count() as u64
 }
@@ -15,48 +9,35 @@ pub fn solve_a(input: &str) -> u64 {
 pub fn solve_b(input: &str) -> u64 {
     input
         .lines()
-        .map(|line| {
-            line.split(' ')
-                .map(|s| s.parse::<u64>().unwrap())
-                .collect::<Vec<_>>()
-        })
+        .map(parse_numbers)
         .filter(|numbers| {
-            if solve_a_line(numbers) {
-                return true;
-            }
-            for n in 0..numbers.len() {
-                if solve_a_line(
-                    &numbers
-                        .iter()
-                        .copied()
-                        .enumerate()
-                        .filter(|(index, _)| *index != n)
-                        .map(|(_, value)| value)
-                        .collect::<Vec<_>>(),
-                ) {
-                    return true;
-                }
-            }
-            false
+            solve_a_line(numbers)
+                || (0..numbers.len())
+                    .map(|n| numbers_without(n, numbers))
+                    .any(|numbers| solve_a_line(&numbers))
         })
         .count() as u64
 }
 
 fn solve_a_line(numbers: &[u64]) -> bool {
-    let mut pairs = numbers
-        .iter()
-        .copied()
-        .dropping_back(1)
-        .zip(numbers.iter().copied().dropping(1))
-        .peekable();
-
-    let increasing = pairs.peek().map(|(a, b)| a < b).unwrap_or_default();
-
-    pairs.all(|(a, b)| (increasing && a < b || !increasing && a > b) && safe_difference(a, b))
+    (numbers.is_sorted() || numbers.is_sorted_by(|a, b| b < a))
+        && numbers
+            .windows(2)
+            .all(|window| (1u64..=3).contains(&window[0].abs_diff(window[1])))
 }
 
-fn safe_difference(a: u64, b: u64) -> bool {
-    (1..=3).contains(&a.abs_diff(b))
+fn parse_numbers(s: &str) -> Vec<u64> {
+    s.split(' ').map(|s| s.parse().unwrap()).collect()
+}
+
+fn numbers_without(n: usize, numbers: &[u64]) -> Vec<u64> {
+    numbers
+        .iter()
+        .copied()
+        .enumerate()
+        .filter(|(index, _)| *index != n)
+        .map(|(_, value)| value)
+        .collect()
 }
 
 #[cfg(test)]
