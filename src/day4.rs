@@ -1,64 +1,50 @@
 pub fn solve_a(input: &str) -> u64 {
     let matrix: Vec<Vec<_>> = input.lines().map(|line| line.chars().collect()).collect();
-    let mut total = 0;
+    let mut words = Vec::new();
+
     for y in 0..matrix.len() {
-        for x in 0..matrix[0].len() {
-            if matrix[y][x] == 'X' {
-                if matrix[y].get(x + 1) == Some(&'M')
-                    && matrix[y].get(x + 2) == Some(&'A')
-                    && matrix[y].get(x + 3) == Some(&'S')
-                {
-                    total += 1;
-                }
-                if matrix.get(y + 1).map(|row| row[x]) == Some('M')
-                    && matrix.get(y + 2).map(|row| row[x]) == Some('A')
-                    && matrix.get(y + 3).map(|row| row[x]) == Some('S')
-                {
-                    total += 1;
-                }
-                if matrix.get(y + 1).and_then(|row| row.get(x + 1)) == Some(&'M')
-                    && matrix.get(y + 2).and_then(|row| row.get(x + 2)) == Some(&'A')
-                    && matrix.get(y + 3).and_then(|row| row.get(x + 3)) == Some(&'S')
-                {
-                    total += 1;
-                }
-            } else if matrix[y][x] == 'S' {
-                if matrix[y].get(x + 1) == Some(&'A')
-                    && matrix[y].get(x + 2) == Some(&'M')
-                    && matrix[y].get(x + 3) == Some(&'X')
-                {
-                    total += 1;
-                }
-                if matrix.get(y + 1).map(|row| row[x]) == Some('A')
-                    && matrix.get(y + 2).map(|row| row[x]) == Some('M')
-                    && matrix.get(y + 3).map(|row| row[x]) == Some('X')
-                {
-                    total += 1;
-                }
-                if matrix.get(y + 1).and_then(|row| row.get(x + 1)) == Some(&'A')
-                    && matrix.get(y + 2).and_then(|row| row.get(x + 2)) == Some(&'M')
-                    && matrix.get(y + 3).and_then(|row| row.get(x + 3)) == Some(&'X')
-                {
-                    total += 1;
-                }
-            }
-            if matrix[y].get(x + 3) == Some(&'X')
-                && matrix.get(y + 1).and_then(|row| row.get(x + 2)) == Some(&'M')
-                && matrix.get(y + 2).and_then(|row| row.get(x + 1)) == Some(&'A')
-                && matrix.get(y + 3).map(|row| row[x]) == Some('S')
-            {
-                total += 1;
-            }
-            if matrix[y].get(x + 3) == Some(&'S')
-                && matrix.get(y + 1).and_then(|row| row.get(x + 2)) == Some(&'A')
-                && matrix.get(y + 2).and_then(|row| row.get(x + 1)) == Some(&'M')
-                && matrix.get(y + 3).map(|row| row[x]) == Some('X')
-            {
-                total += 1;
-            }
+        for x in 0..matrix[0].len() - 3 {
+            words.push([
+                matrix[y][x],
+                matrix[y][x + 1],
+                matrix[y][x + 2],
+                matrix[y][x + 3],
+            ]);
         }
     }
-    total
+
+    for y in 0..matrix.len() - 3 {
+        for x in 0..matrix[0].len() {
+            words.push([
+                matrix[y][x],
+                matrix[y + 1][x],
+                matrix[y + 2][x],
+                matrix[y + 3][x],
+            ]);
+        }
+    }
+
+    for y in 0..matrix.len() - 3 {
+        for x in 0..matrix[0].len() - 3 {
+            words.push([
+                matrix[y][x],
+                matrix[y + 1][x + 1],
+                matrix[y + 2][x + 2],
+                matrix[y + 3][x + 3],
+            ]);
+            words.push([
+                matrix[y + 3][x],
+                matrix[y + 2][x + 1],
+                matrix[y + 1][x + 2],
+                matrix[y][x + 3],
+            ]);
+        }
+    }
+
+    words
+        .into_iter()
+        .filter(|&word| word == ['X', 'M', 'A', 'S'] || word == ['S', 'A', 'M', 'X'])
+        .count() as u64
 }
 
 pub fn solve_b(input: &str) -> u64 {
