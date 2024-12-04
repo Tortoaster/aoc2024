@@ -64,24 +64,13 @@ pub fn solve_a(input: &str) -> u64 {
 pub fn solve_b(input: &str) -> u64 {
     let matrix: Vec<Vec<_>> = input.lines().map(|line| line.chars().collect()).collect();
     let mut total = 0;
-    for y in 0..matrix.len() {
-        for x in 0..matrix[0].len() {
+    for y in 1..matrix.len() - 1 {
+        for x in 1..matrix[0].len() - 1 {
             if matrix[y][x] == 'A'
-                && (matrix
-                    .get(y.wrapping_sub(1))
-                    .and_then(|row| row.get(x.wrapping_sub(1)))
-                    == Some(&'M')
-                    && matrix.get(y + 1).and_then(|row| row.get(x + 1)) == Some(&'S')
-                    || matrix
-                        .get(y.wrapping_sub(1))
-                        .and_then(|row| row.get(x.wrapping_sub(1)))
-                        == Some(&'S')
-                        && matrix.get(y + 1).and_then(|row| row.get(x + 1)) == Some(&'M'))
-                && (matrix.get(y.wrapping_sub(1)).and_then(|row| row.get(x + 1)) == Some(&'M')
-                    && matrix.get(y + 1).and_then(|row| row.get(x.wrapping_sub(1))) == Some(&'S')
-                    || matrix.get(y.wrapping_sub(1)).and_then(|row| row.get(x + 1)) == Some(&'S')
-                        && matrix.get(y + 1).and_then(|row| row.get(x.wrapping_sub(1)))
-                            == Some(&'M'))
+                && (matrix[y - 1][x - 1] == 'M' && matrix[y + 1][x + 1] == 'S'
+                    || matrix[y - 1][x - 1] == 'S' && matrix[y + 1][x + 1] == 'M')
+                && (matrix[y - 1][x + 1] == 'M' && matrix[y + 1][x - 1] == 'S'
+                    || matrix[y - 1][x + 1] == 'S' && matrix[y + 1][x - 1] == 'M')
             {
                 total += 1;
             }
