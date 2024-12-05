@@ -48,23 +48,7 @@ fn parse_input(input: &str) -> (HashMap<u64, HashSet<u64>>, Vec<Vec<u64>>) {
 }
 
 fn conform_rules(page: &[u64], rules: &HashMap<u64, HashSet<u64>>) -> bool {
-    for (before, rest) in rules {
-        for after in rest {
-            match page.iter().position(|n| *n == *before) {
-                None => {}
-                Some(before) => match page.iter().position(|n| *n == *after) {
-                    None => {}
-                    Some(after) => {
-                        if before > after {
-                            return false;
-                        }
-                    }
-                },
-            }
-        }
-    }
-
-    true
+    page.is_sorted_by(|a, b| compare_with_rules(a, b, rules).is_le())
 }
 
 fn compare_with_rules(a: &u64, b: &u64, rules: &HashMap<u64, HashSet<u64>>) -> Ordering {
