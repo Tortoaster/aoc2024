@@ -1,18 +1,10 @@
+use std::collections::BTreeMap;
+
 use rayon::prelude::*;
 
 pub fn solve_a(input: &str) -> u64 {
-    input
-        .lines()
-        .map(|line| line.split_once(": ").unwrap())
-        .map(|(result, numbers)| {
-            (
-                result.parse::<u64>().unwrap(),
-                numbers
-                    .split(' ')
-                    .map(|n| n.parse::<u64>().unwrap())
-                    .collect::<Vec<_>>(),
-            )
-        })
+    parse_input(input)
+        .into_iter()
         .filter(|(result, numbers)| {
             (0usize..1 << (numbers.len() - 1))
                 .into_par_iter()
@@ -23,6 +15,18 @@ pub fn solve_a(input: &str) -> u64 {
 }
 
 pub fn solve_b(input: &str) -> u64 {
+    parse_input(input)
+        .into_iter()
+        .filter(|(result, numbers)| {
+            (0..3usize.pow(numbers.len() as u32 - 1))
+                .into_par_iter()
+                .any(|ops| perform::<3>(ops, numbers) == *result)
+        })
+        .map(|(result, _)| result)
+        .sum()
+}
+
+fn parse_input(input: &str) -> BTreeMap<u64, Vec<u64>> {
     input
         .lines()
         .map(|line| line.split_once(": ").unwrap())
@@ -32,16 +36,10 @@ pub fn solve_b(input: &str) -> u64 {
                 numbers
                     .split(' ')
                     .map(|n| n.parse::<u64>().unwrap())
-                    .collect::<Vec<_>>(),
+                    .collect(),
             )
         })
-        .filter(|(result, numbers)| {
-            (0..3usize.pow(numbers.len() as u32 - 1))
-                .into_par_iter()
-                .any(|ops| perform::<3>(ops, numbers) == *result)
-        })
-        .map(|(result, _)| result)
-        .sum()
+        .collect()
 }
 
 fn perform<const NUM_OPS: usize>(mut ops: usize, numbers: &[u64]) -> u64 {
