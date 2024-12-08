@@ -7,6 +7,7 @@ mod day4;
 mod day5;
 mod day6;
 mod day7;
+mod day8;
 
 fn main() {
     let mut days: BTreeMap<u32, (&str, fn(&str) -> u64, fn(&str) -> u64)> = BTreeMap::new();
@@ -51,21 +52,28 @@ fn main() {
             day5::solve_b,
         ),
     );
-    // Takes too long
-    // days.insert(
-    //     6,
-    //     (
-    //         include_str!("../input/day6.txt"),
-    //         day6::solve_a,
-    //         day6::solve_b,
-    //     ),
-    // );
+    days.insert(
+        6,
+        (
+            include_str!("../input/day6.txt"),
+            day6::solve_a,
+            day6::solve_b,
+        ),
+    );
     days.insert(
         7,
         (
             include_str!("../input/day7.txt"),
             day7::solve_a,
             day7::solve_b,
+        ),
+    );
+    days.insert(
+        8,
+        (
+            include_str!("../input/day8.txt"),
+            day8::solve_a,
+            day8::solve_b,
         ),
     );
 
