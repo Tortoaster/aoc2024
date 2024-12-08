@@ -16,28 +16,46 @@ pub fn solve_a(input: &str) -> u64 {
         .filter(|(result, numbers)| {
             (0usize..1 << (numbers.len() - 1))
                 .into_par_iter()
-                .any(|ops| perform(ops, numbers) == *result)
+                .any(|ops| perform::<2>(ops, numbers) == *result)
         })
         .map(|(result, _)| result)
         .sum()
 }
 
 pub fn solve_b(input: &str) -> u64 {
-    0
+    input
+        .lines()
+        .map(|line| line.split_once(": ").unwrap())
+        .map(|(result, numbers)| {
+            (
+                result.parse::<u64>().unwrap(),
+                numbers
+                    .split(' ')
+                    .map(|n| n.parse::<u64>().unwrap())
+                    .collect::<Vec<_>>(),
+            )
+        })
+        .filter(|(result, numbers)| {
+            (0..3usize.pow(numbers.len() as u32 - 1))
+                .into_par_iter()
+                .any(|ops| perform::<3>(ops, numbers) == *result)
+        })
+        .map(|(result, _)| result)
+        .sum()
 }
 
-fn perform(ops: usize, numbers: &[u64]) -> u64 {
-    numbers
-        .iter()
-        .skip(1)
-        .zip((0..numbers.len() - 1).map(|shift| (ops >> shift) & 1).rev())
-        .fold(numbers[0], |acc, (number, op)| {
-            if op == 0 {
-                acc + number
-            } else {
-                acc * number
-            }
-        })
+fn perform<const NUM_OPS: usize>(mut ops: usize, numbers: &[u64]) -> u64 {
+    let mut total = numbers[0];
+    for number in numbers.iter().skip(1) {
+        let op = ops % NUM_OPS;
+        match op {
+            0 => total += number,
+            1 => total *= number,
+            _ => total = 10u64.pow(number.ilog(10) + 1) * total + number,
+        }
+        ops /= NUM_OPS;
+    }
+    total
 }
 
 #[cfg(test)]
