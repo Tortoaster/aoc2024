@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 mod day1;
+mod day10;
 mod day2;
 mod day3;
 mod day4;
@@ -83,6 +84,14 @@ fn main() {
             include_str!("../input/day9.txt"),
             day9::solve_a,
             day9::solve_b,
+        ),
+    );
+    days.insert(
+        10,
+        (
+            include_str!("../input/day10.txt"),
+            day10::solve_a,
+            day10::solve_b,
         ),
     );
 
