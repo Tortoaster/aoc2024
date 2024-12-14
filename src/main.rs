@@ -5,6 +5,7 @@ mod day10;
 mod day11;
 mod day12;
 mod day13;
+mod day14;
 mod day2;
 mod day3;
 mod day4;
@@ -113,12 +114,20 @@ fn main() {
             day12::solve_b,
         ),
     );
+    // days.insert(
+    //     13,
+    //     (
+    //         include_str!("../input/day13.txt"),
+    //         day13::solve_a,
+    //         day13::solve_b,
+    //     ),
+    // );
     days.insert(
-        13,
+        14,
         (
-            include_str!("../input/day13.txt"),
-            day13::solve_a,
-            day13::solve_b,
+            include_str!("../input/day14.txt"),
+            day14::solve_a,
+            day14::solve_b,
         ),
     );
 
