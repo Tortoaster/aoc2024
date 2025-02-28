@@ -1,87 +1,77 @@
 use std::iter;
 
-use itertools::Itertools;
+use cached::proc_macro::cached;
 
 pub fn solve_a(input: &str) -> u64 {
-    let (input, numbers) = parse_input(input);
-
-    input
-        .iter()
-        .map(|buttons| {
-            let output = expand_first(buttons, 3);
-            println!("{:?}", output);
-            output.len() as u64
-        })
-        .zip(numbers)
-        .map(|(length, number)| length * number)
-        .sum()
+    solve(input, 3)
 }
 
 pub fn solve_b(input: &str) -> u64 {
+    solve(input, 26)
+}
+
+fn solve(input: &str, depth: usize) -> u64 {
     let (input, numbers) = parse_input(input);
 
     input
-        .iter()
+        .into_iter()
         .map(|buttons| {
-            let output = expand_first(buttons, 25);
-            println!("{:?}", output);
-            output.len() as u64
+            iter::once(Button::Activate)
+                .chain(buttons)
+                .collect::<Vec<_>>()
+        })
+        .map(|path| {
+            path.windows(2)
+                .map(|from_to| expand_first(from_to[0], from_to[1], depth))
+                .sum::<u64>()
         })
         .zip(numbers)
         .map(|(length, number)| length * number)
         .sum()
 }
 
-fn expand_first(buttons: &[Button], depth: usize) -> Vec<DirButton> {
-    Button::Activate
-        .paths_to(&buttons[0])
-        .iter()
-        .map(|path| expand(path, depth - 1))
-        .min_by(|a, b| a.len().cmp(&b.len()))
-        .unwrap()
-        .into_iter()
-        .chain(
-            buttons
-                .windows(2)
-                .map(|from_to| {
-                    from_to[0]
-                        .paths_to(&from_to[1])
-                        .iter()
-                        .map(|path| expand(path, depth - 1))
-                        .min_by(|a, b| a.len().cmp(&b.len()))
-                        .unwrap()
-                })
-                .concat(),
-        )
-        .collect()
-}
-
-fn expand(buttons: &[DirButton], depth: usize) -> Vec<DirButton> {
+#[cached]
+fn expand_first(from: Button, to: Button, depth: usize) -> u64 {
     if depth == 0 {
-        return buttons.to_vec();
+        return 1;
     }
 
-    DirButton::Activate
-        .paths_to(&buttons[0])
-        .iter()
-        .map(|path| expand(path, depth - 1))
-        .min_by(|a, b| a.len().cmp(&b.len()))
-        .unwrap()
+    from.paths_to(&to)
         .into_iter()
-        .chain(
-            buttons
-                .windows(2)
-                .map(|from_to| {
-                    from_to[0]
-                        .paths_to(&from_to[1])
-                        .iter()
-                        .map(|path| expand(path, depth - 1))
-                        .min_by(|a, b| a.len().cmp(&b.len()))
-                        .unwrap()
-                })
-                .concat(),
-        )
-        .collect()
+        .map(|buttons| {
+            iter::once(DirButton::Activate)
+                .chain(buttons)
+                .collect::<Vec<_>>()
+        })
+        .map(|path| {
+            path.windows(2)
+                .map(|from_to| expand(from_to[0], from_to[1], depth - 1))
+                .sum::<u64>()
+        })
+        .min()
+        .unwrap()
+}
+
+#[cached]
+fn expand(from: DirButton, to: DirButton, depth: usize) -> u64 {
+    if depth == 0 {
+        return 1;
+    }
+
+    from.paths_to(&to)
+        .into_iter()
+        .map(|buttons| {
+            iter::once(DirButton::Activate)
+                .chain(buttons)
+                .collect::<Vec<_>>()
+        })
+        .map(|path| {
+            path.windows(2)
+                .map(|from_to| expand(from_to[0], from_to[1], depth - 1))
+                .sum::<u64>()
+        })
+        .min()
+        .unwrap()
 }
 
 fn parse_input(input: &str) -> (Vec<Vec<Button>>, Vec<u64>) {
@@ -98,7 +88,7 @@ fn parse_input(input: &str) -> (Vec<Vec<Button>>, Vec<u64>) {
         .unzip()
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 enum Button {
     Zero,
     One,
@@ -169,7 +159,7 @@ impl Pos for Button {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 enum DirButton {
     Up,
     Left,
