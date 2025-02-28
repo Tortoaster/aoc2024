@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, io, io::Write};
+use std::collections::BTreeSet;
 
 use itertools::Itertools;
 
@@ -19,50 +19,25 @@ pub fn solve_a(input: &str) -> u64 {
 pub fn solve_b(input: &str) -> u64 {
     let robots = parse_input(input);
 
-    for seconds in 100.. {
-        let positions: BTreeSet<_> = robots
-            .iter()
-            .map(|robot| pass_seconds(robot, seconds, 101, 103))
-            .collect();
-
-        let significant = (0..101)
-            .flat_map(|y| (0..99).map(move |x| (x, y)))
-            .any(|(x, y)| {
-                (0..3)
-                    .flat_map(|dy| (0..3).map(move |dx| (dx, dy)))
-                    .all(|(dx, dy)| positions.contains(&(x + dx, y + dy)))
-            });
-
-        if significant {
-            for y in 0..103 {
-                for x in 0..101 {
-                    let number = positions
-                        .iter()
-                        .filter(|pos| pos.0 == x && pos.1 == y)
-                        .count();
-                    print!(
-                        "{}",
-                        if number > 0 {
-                            number.to_string()
-                        } else {
-                            ".".to_owned()
-                        }
-                    );
-                }
-                println!();
-            }
-
-            print!("Does this look like a christmas tree? [y/N] ");
-            io::stdout().flush().unwrap();
-            let mut input: String = String::new();
-            io::stdin().read_line(&mut input).unwrap();
-            if input.trim() == "y" {
-                return seconds as u64;
-            }
-        }
-    }
-
-    0
+    (0..)
+        .map(|seconds| {
+            robots
+                .iter()
+                .map(|robot| pass_seconds(robot, seconds, 101, 103))
+                .collect::<BTreeSet<_>>()
+        })
+        .enumerate()
+        .find_map(|(seconds, positions)| {
+            (0..101)
+                .flat_map(|y| (0..99).map(move |x| (x, y)))
+                .any(|(x, y)| {
+                    (0..3)
+                        .flat_map(|dy| (0..3).map(move |dx| (dx, dy)))
+                        .all(|(dx, dy)| positions.contains(&(x + dx, y + dy)))
+                })
+                .then_some(seconds as u64)
+        })
+        .unwrap()
 }
 
 fn parse_input(input: &str) -> Vec<Robot> {

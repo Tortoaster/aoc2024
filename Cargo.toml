@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+arboard = "3.4.1"
+async-once-cell = "0.5.4"
 cached = "0.54.0"
+crossterm = "0.28.1"
 disjoint-hash-set = "1.0.0"
-itertools = "0.13.0"
+itertools = "0.14.0"
+ratatui = "0.29.0"
 rayon = "1.10.0"
