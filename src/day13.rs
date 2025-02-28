@@ -1,6 +1,6 @@
 use std::ops::Add;
 
-struct Coords(usize, usize);
+struct Coords(i64, i64);
 
 impl Add for Coords {
     type Output = Self;
@@ -11,7 +11,50 @@ impl Add for Coords {
 }
 
 pub fn solve_a(input: &str) -> u64 {
-    let problems: Vec<_> = input
+    let problems = parse_input(input);
+    problems
+        .into_iter()
+        .flat_map(|(a, b, prize)| solve(a, b, prize))
+        .sum()
+}
+
+pub fn solve_b(input: &str) -> u64 {
+    let problems = parse_input(input);
+    problems
+        .into_iter()
+        .flat_map(|(a, b, prize)| {
+            solve(
+                a,
+                b,
+                Coords(prize.0 + 10000000000000, prize.1 + 10000000000000),
+            )
+        })
+        .sum()
+}
+
+fn solve(a: Coords, b: Coords, prize: Coords) -> Result<u64, ()> {
+    let q = prize.0 * a.1 - prize.1 * a.0;
+    let r = b.0 * a.1 - b.1 * a.0;
+    assert(|| q % r == 0)?;
+    let b_presses = q / r;
+    assert(|| b_presses >= 0)?;
+    let s = prize.0 - b_presses * b.0;
+    assert(|| s % a.0 == 0)?;
+    let a_presses = s / a.0;
+    assert(|| a_presses >= 0)?;
+    Ok(a_presses as u64 * 3 + b_presses as u64)
+}
+
+fn assert(predicate: impl FnOnce() -> bool) -> Result<(), ()> {
+    if predicate() {
+        Ok(())
+    } else {
+        Err(())
+    }
+}
+
+fn parse_input(input: &str) -> Vec<(Coords, Coords, Coords)> {
+    input
         .split("\n\n")
         .map(|triple| {
             let mut lines = triple.lines();
@@ -50,47 +93,12 @@ pub fn solve_a(input: &str) -> u64 {
             );
             (a, b, prize)
         })
-        .collect();
-
-    problems
-        .into_iter()
-        .filter_map(|(a, b, prize)| {
-            let mut cost: Vec<Vec<_>> = (0..=prize.1)
-                .map(|y| (0..=prize.0).map(|_| None).collect())
-                .collect();
-            cost[prize.1][prize.0] = Some(0u64);
-            for y in (0..=prize.1).rev() {
-                for x in (0..=prize.0).rev() {
-                    if let Some(c) = cost
-                        .get(y + a.1)
-                        .and_then(|row| row.get(x + a.0).copied().flatten())
-                    {
-                        cost[y][x] = Some(c + 3);
-                    }
-
-                    if let Some(c) = cost
-                        .get(y + b.1)
-                        .and_then(|row| row.get(x + b.0).copied().flatten())
-                    {
-                        if cost[y][x].is_none() || cost[y][x].unwrap() > c + 1 {
-                            cost[y][x] = Some(c + 1);
-                        }
-                    }
-                }
-            }
-
-            cost[0][0]
-        })
-        .sum()
-}
-
-pub fn solve_b(input: &str) -> u64 {
-    0
+        .collect()
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{solve_a, solve_b};
+    use super::solve_a;
 
     const INPUT: &str = "Button A: X+94, Y+34
 Button B: X+22, Y+67
@@ -112,10 +120,5 @@ Prize: X=18641, Y=10279
     #[test]
     fn test_a() {
         assert_eq!(solve_a(INPUT), 480);
-    }
-
-    #[test]
-    fn test_b() {
-        assert_eq!(solve_b(INPUT), 1206);
     }
 }
