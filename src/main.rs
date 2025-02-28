@@ -31,6 +31,7 @@ mod day6;
 mod day7;
 mod day8;
 mod day9;
+mod day21;
 
 fn main() {
     #[rustfmt::skip]
@@ -49,6 +50,7 @@ fn main() {
         (12, include_str!("../input/day12.txt"), day12::solve_a, day12::solve_b),
         (13, include_str!("../input/day13.txt"), day13::solve_a, day13::solve_b),
         (14, include_str!("../input/day14.txt"), day14::solve_a, day14::solve_b),
+        (21, include_str!("../input/day21.txt"), day21::solve_a, day21::solve_b),
     ];
 
     let mut outputs: BTreeMap<(i32, Part), _> = days
@@ -116,9 +118,9 @@ fn draw(frame: &mut Frame, outputs: &mut BTreeMap<(i32, Part), Remember<u64>>, s
             Constraint::Length(u64::MAX.to_string().len() as u16 + 14),
             5,
         ))
-        .split(*row)
-        .iter()
-        .enumerate()
+            .split(*row)
+            .iter()
+            .enumerate()
         {
             let day = (row_index * 5 + col_index + 1) as i32;
 
@@ -146,16 +148,16 @@ fn draw(frame: &mut Frame, outputs: &mut BTreeMap<(i32, Part), Remember<u64>>, s
                     Constraint::Length(8),
                     Constraint::Length(u64::MAX.to_string().len() as u16),
                 ])
-                .split(*line);
+                    .split(*line);
 
                 let mut label = match state.copied {
                     Some((copy_day, copy_part, time))
-                        if copy_day == day
-                            && copy_part == part
-                            && time.elapsed() < Duration::from_secs(1) =>
-                    {
-                        Span::from("Copied! ")
-                    }
+                    if copy_day == day
+                        && copy_part == part
+                        && time.elapsed() < Duration::from_secs(1) =>
+                        {
+                            Span::from("Copied! ")
+                        }
                     _ => Span::from(format!("Part {}: ", part)),
                 };
                 label = if state.day == day && state.part == part {
@@ -172,7 +174,7 @@ fn draw(frame: &mut Frame, outputs: &mut BTreeMap<(i32, Part), Remember<u64>>, s
                         Some(output) => Span::from(output.to_string()).cyan(),
                     },
                 }
-                .into_right_aligned_line();
+                    .into_right_aligned_line();
 
                 frame.render_widget(output, chunks[1]);
             }
