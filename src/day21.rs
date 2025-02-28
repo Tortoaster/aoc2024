@@ -13,16 +13,10 @@ pub fn solve_b(input: &str) -> u64 {
 fn solve(input: &str, depth: usize) -> u64 {
     let (input, numbers) = parse_input(input);
 
-    input
-        .into_iter()
-        .map(|buttons| {
-            iter::once(Button::Activate)
-                .chain(buttons)
-                .collect::<Vec<_>>()
-        })
+    prepend_start_pos(input)
         .map(|path| {
             path.windows(2)
-                .map(|from_to| expand_first(from_to[0], from_to[1], depth))
+                .map(|from_to| expand_button_cached(from_to[0], from_to[1], depth))
                 .sum::<u64>()
         })
         .zip(numbers)
@@ -31,47 +25,34 @@ fn solve(input: &str, depth: usize) -> u64 {
 }
 
 #[cached]
-fn expand_first(from: Button, to: Button, depth: usize) -> u64 {
+fn expand_button_cached(from: Button, to: Button, depth: usize) -> u64 {
+    expand(from, to, depth)
+}
+
+#[cached]
+fn expand_dir_button_cached(from: DirButton, to: DirButton, depth: usize) -> u64 {
+    expand(from, to, depth)
+}
+
+fn expand<T: Pos>(from: T, to: T, depth: usize) -> u64 {
     if depth == 0 {
         return 1;
     }
 
-    from.paths_to(&to)
-        .into_iter()
-        .map(|buttons| {
-            iter::once(DirButton::Activate)
-                .chain(buttons)
-                .collect::<Vec<_>>()
-        })
+    prepend_start_pos(from.paths_to(&to))
         .map(|path| {
             path.windows(2)
-                .map(|from_to| expand(from_to[0], from_to[1], depth - 1))
+                .map(|from_to| expand_dir_button_cached(from_to[0], from_to[1], depth - 1))
                 .sum::<u64>()
         })
         .min()
         .unwrap()
 }
 
-#[cached]
-fn expand(from: DirButton, to: DirButton, depth: usize) -> u64 {
-    if depth == 0 {
-        return 1;
-    }
-
-    from.paths_to(&to)
+fn prepend_start_pos<T: Pos>(input: Vec<Vec<T>>) -> impl Iterator<Item = Vec<T>> {
+    input
         .into_iter()
-        .map(|buttons| {
-            iter::once(DirButton::Activate)
-                .chain(buttons)
-                .collect::<Vec<_>>()
-        })
-        .map(|path| {
-            path.windows(2)
-                .map(|from_to| expand(from_to[0], from_to[1], depth - 1))
-                .sum::<u64>()
-        })
-        .min()
-        .unwrap()
+        .map(|buttons| iter::once(T::ACTIVATE).chain(buttons).collect::<Vec<_>>())
 }
 
 fn parse_input(input: &str) -> (Vec<Vec<Button>>, Vec<u64>) {
@@ -125,6 +106,7 @@ impl Button {
 impl Pos for Button {
     const EMPTY_X: usize = 0;
     const EMPTY_Y: usize = 0;
+    const ACTIVATE: Self = Self::Activate;
 
     fn x(&self) -> usize {
         match self {
@@ -171,6 +153,7 @@ enum DirButton {
 impl Pos for DirButton {
     const EMPTY_X: usize = 0;
     const EMPTY_Y: usize = 1;
+    const ACTIVATE: Self = Self::Activate;
 
     fn x(&self) -> usize {
         match self {
@@ -196,6 +179,7 @@ impl Pos for DirButton {
 trait Pos {
     const EMPTY_X: usize;
     const EMPTY_Y: usize;
+    const ACTIVATE: Self;
 
     fn x(&self) -> usize;
     fn y(&self) -> usize;
