@@ -1,6 +1,6 @@
+use std::{collections::BTreeSet, iter};
+
 use disjoint_hash_set::DisjointHashSet;
-use std::collections::BTreeSet;
-use std::iter;
 
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
 enum Side {

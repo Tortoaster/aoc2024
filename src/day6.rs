@@ -1,5 +1,6 @@
-use rayon::prelude::*;
 use std::collections::BTreeSet;
+
+use rayon::prelude::*;
 
 #[derive(Clone, PartialEq)]
 enum Tile {

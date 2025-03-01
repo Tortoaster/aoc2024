@@ -1,6 +1,9 @@
+use std::{
+    cmp::Ordering,
+    collections::{HashMap, HashSet},
+};
+
 use itertools::Itertools;
-use std::cmp::Ordering;
-use std::collections::{HashMap, HashSet};
 
 pub fn solve_a(input: &str) -> u64 {
     let (rules, pages) = parse_input(input);
