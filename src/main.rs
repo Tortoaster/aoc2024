@@ -11,11 +11,13 @@ use crossterm::{
     event,
     event::{Event, KeyCode, KeyEvent},
 };
+use itertools::Itertools;
 use ratatui::{
     prelude::*,
     widgets::{Block, BorderType, Padding},
     Frame,
 };
+use throbber_widgets_tui::{Throbber, ThrobberState};
 
 mod day1;
 mod day10;
@@ -65,17 +67,21 @@ fn main() {
         .map(|(day, part, input, solve)| {
             (
                 (day, part),
-                Remember::new(thread::spawn(move || solve(input))),
+                Remember::new(thread::spawn(move || {
+                    let start = Instant::now();
+                    (solve(input), start.elapsed())
+                })),
             )
         })
         .collect();
-    let mut state = State::new(&outputs);
+    let mut state = State::new(outputs.keys());
 
     let mut clipboard = Clipboard::new().unwrap();
     let mut terminal = ratatui::init();
-    let tick_rate = Duration::from_millis(250);
+    let tick_rate = Duration::from_millis(100);
     let mut last_tick = Instant::now();
     loop {
+        state.throbber_state.calc_next();
         terminal
             .draw(|frame| draw(frame, &mut outputs, &state))
             .unwrap();
@@ -94,7 +100,7 @@ fn main() {
                             .get_mut(&(state.day, state.part))
                             .and_then(Remember::poll)
                         {
-                            clipboard.set_text(output.to_string()).unwrap();
+                            clipboard.set_text(output.0.to_string()).unwrap();
                             state.copy();
                         }
                     }
@@ -109,8 +115,12 @@ fn main() {
     ratatui::restore();
 }
 
-fn draw(frame: &mut Frame, outputs: &mut BTreeMap<(i32, Part), Remember<u64>>, state: &State) {
-    for (row_index, row) in Layout::vertical(iter::repeat_n(Constraint::Length(6), 5))
+fn draw(
+    frame: &mut Frame,
+    outputs: &mut BTreeMap<(i32, Part), Remember<(u64, Duration)>>,
+    state: &State,
+) {
+    for (row_index, row) in Layout::vertical(iter::repeat_n(Constraint::Length(8), 5))
         .split(frame.area())
         .iter()
         .enumerate()
@@ -132,16 +142,27 @@ fn draw(frame: &mut Frame, outputs: &mut BTreeMap<(i32, Part), Remember<u64>>, s
                 .title(format!("[  Day {day}  ]"));
             block = if state.day == day {
                 block.light_yellow()
+            } else if outputs.contains_key(&(day, Part::One))
+                || outputs.contains_key(&(day, Part::Two))
+            {
+                block.white()
             } else {
                 block.gray()
             };
             let block_inner = block.inner(*tile);
             frame.render_widget(block, *tile);
 
-            for (part, line) in Layout::vertical([Constraint::Length(1), Constraint::Length(1)])
-                .split(block_inner)
-                .iter()
-                .enumerate()
+            for (part, mut lines) in Layout::vertical([
+                Constraint::Length(1),
+                Constraint::Length(1),
+                Constraint::Length(1),
+                Constraint::Length(1),
+            ])
+            .split(block_inner)
+            .iter()
+            .chunks(2)
+            .into_iter()
+            .enumerate()
             {
                 let part = Part::try_from(part + 1).unwrap();
 
@@ -149,7 +170,7 @@ fn draw(frame: &mut Frame, outputs: &mut BTreeMap<(i32, Part), Remember<u64>>, s
                     Constraint::Length(8),
                     Constraint::Length(u64::MAX.to_string().len() as u16),
                 ])
-                .split(*line);
+                .split(*lines.next().unwrap());
 
                 let mut label = match state.copied {
                     Some((copy_day, copy_part, time))
@@ -163,21 +184,43 @@ fn draw(frame: &mut Frame, outputs: &mut BTreeMap<(i32, Part), Remember<u64>>, s
                 };
                 label = if state.day == day && state.part == part {
                     label.light_yellow()
-                } else {
+                } else if outputs.contains_key(&(day, part)) {
                     label.white()
+                } else {
+                    label.gray()
                 };
                 frame.render_widget(label, chunks[0]);
 
-                let output = match outputs.get_mut(&(day, part)) {
-                    None => Span::from("-").gray(),
+                match outputs.get_mut(&(day, part)) {
+                    None => {
+                        let output = Span::from("-").gray().into_right_aligned_line();
+                        frame.render_widget(output, chunks[1]);
+                    }
                     Some(handle) => match handle.poll() {
-                        None => Span::from("...").gray(),
-                        Some(output) => Span::from(output.to_string()).cyan(),
+                        None => {
+                            let throbber = Throbber::default()
+                                .throbber_set(throbber_widgets_tui::BRAILLE_SIX_DOUBLE)
+                                .style(Style::new())
+                                .to_line(&state.throbber_state)
+                                .right_aligned();
+                            frame.render_widget(throbber, chunks[1]);
+                        }
+                        Some(output) => {
+                            let output = Span::from(output.0.to_string())
+                                .cyan()
+                                .into_right_aligned_line();
+                            frame.render_widget(output, chunks[1]);
+                        }
                     },
                 }
-                .into_right_aligned_line();
 
-                frame.render_widget(output, chunks[1]);
+                if let Some(&(_, duration)) = outputs.get_mut(&(day, part)).and_then(Remember::poll)
+                {
+                    let time = Span::from(format!("{:.5} s", duration.as_secs_f64()))
+                        .gray()
+                        .into_centered_line();
+                    frame.render_widget(time, *lines.next().unwrap());
+                }
             }
         }
     }
@@ -188,15 +231,17 @@ struct State {
     day: i32,
     part: Part,
     copied: Option<(i32, Part, Instant)>,
+    throbber_state: ThrobberState,
 }
 
 impl State {
-    pub fn new(outputs: &BTreeMap<(i32, Part), Remember<u64>>) -> Self {
-        let (day, part) = outputs.keys().max().copied().unwrap_or((1, Part::One));
+    pub fn new<'a>(outputs: impl IntoIterator<Item = &'a (i32, Part)>) -> Self {
+        let (day, part) = outputs.into_iter().max().copied().unwrap_or((1, Part::One));
         Self {
             day,
             part,
             copied: None,
+            throbber_state: ThrobberState::default(),
         }
     }
 
