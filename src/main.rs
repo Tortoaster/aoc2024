@@ -24,6 +24,7 @@ mod day12;
 mod day13;
 mod day14;
 mod day2;
+mod day21;
 mod day3;
 mod day4;
 mod day5;
@@ -31,7 +32,7 @@ mod day6;
 mod day7;
 mod day8;
 mod day9;
-mod day21;
+mod vec2;
 
 fn main() {
     #[rustfmt::skip]
@@ -118,9 +119,9 @@ fn draw(frame: &mut Frame, outputs: &mut BTreeMap<(i32, Part), Remember<u64>>, s
             Constraint::Length(u64::MAX.to_string().len() as u16 + 14),
             5,
         ))
-            .split(*row)
-            .iter()
-            .enumerate()
+        .split(*row)
+        .iter()
+        .enumerate()
         {
             let day = (row_index * 5 + col_index + 1) as i32;
 
@@ -148,16 +149,16 @@ fn draw(frame: &mut Frame, outputs: &mut BTreeMap<(i32, Part), Remember<u64>>, s
                     Constraint::Length(8),
                     Constraint::Length(u64::MAX.to_string().len() as u16),
                 ])
-                    .split(*line);
+                .split(*line);
 
                 let mut label = match state.copied {
                     Some((copy_day, copy_part, time))
-                    if copy_day == day
-                        && copy_part == part
-                        && time.elapsed() < Duration::from_secs(1) =>
-                        {
-                            Span::from("Copied! ")
-                        }
+                        if copy_day == day
+                            && copy_part == part
+                            && time.elapsed() < Duration::from_secs(1) =>
+                    {
+                        Span::from("Copied! ")
+                    }
                     _ => Span::from(format!("Part {}: ", part)),
                 };
                 label = if state.day == day && state.part == part {
@@ -174,7 +175,7 @@ fn draw(frame: &mut Frame, outputs: &mut BTreeMap<(i32, Part), Remember<u64>>, s
                         Some(output) => Span::from(output.to_string()).cyan(),
                     },
                 }
-                    .into_right_aligned_line();
+                .into_right_aligned_line();
 
                 frame.render_widget(output, chunks[1]);
             }
